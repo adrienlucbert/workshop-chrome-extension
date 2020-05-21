@@ -1,8 +1,5 @@
-import Controller from './Controller.js'
-import Store from './Store.js'
-
-Store.autologin = "[place your autologin link here]"
-
-Controller.getUpcomingEvents()
-    .then(console.log)
-    .catch(console.error)
+chrome.runtime.sendMessage({ type: 'getEvents' }, (res) => {
+    if (!res.ok)
+        throw res.message
+    console.log(res.data)
+})
