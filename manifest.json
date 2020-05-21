@@ -1,0 +1,11 @@
+{
+    "name": "Epitech Reminder",
+    "version": "1.0",
+    "description": "Retrieve your upcoming events from Epitech's intranet",
+    "manifest_version": 2,
+    "permissions": [],
+    "browser_action": {
+        "default_title": "Epitech Reminder",
+        "default_popup": "src/templates/popup.html"
+    }
+}
