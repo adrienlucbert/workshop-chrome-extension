@@ -29,7 +29,7 @@ const update = () => {
 const API = (message, from, send) => {
     switch (message.type) {
         case 'getNotifications':
-            send({ ok: true, response: notifs })
+            send({ ok: true, notifs: notifs })
         break
         default:
             send({ ok: false, message: 'Request type unknown' })

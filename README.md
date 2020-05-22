@@ -8,5 +8,5 @@ TODOs:
 - [x] Epitech's Intranet API requester
 - [x] Retrieve notifications with a background script
 - [ ] Show badges when new events have been retrieved
-- [ ] Basic UI
+- [x] Basic UI
 - [ ] Store API token
