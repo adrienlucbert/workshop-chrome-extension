@@ -33,7 +33,7 @@ class ApiRequester {
                 if (res.ok) {
                     return res.json()
                 } else {
-                    throw Error(res.statusText)
+                    throw new Error(res.statusText)
                 }
             })
     }

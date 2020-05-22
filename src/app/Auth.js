@@ -2,20 +2,31 @@ import ApiRequester from './ApiRequester.js'
 
 class Auth {
     /**
-     * Validate autologin link and store it
+     * Verify autologin token validity
      * 
      * @param {String} autologin intranet autologin link
      */
-    static register(autologin) {
+    static validateToken(autologin) {
         const url = '/user/'
         return ApiRequester.fetch(autologin, url)
             .then(json => {
                 if (!json['login'])
                     throw new Error('Invalid autologin link')
-                chrome.storage.local.set({ autologin: autologin })
             })
             .catch(() => {
-                return new Error('Invalid autologin link')
+                throw new Error('Invalid autologin link')
+            })
+    }
+
+    /**
+     * Validate autologin link and store it
+     * 
+     * @param {String} autologin intranet autologin link
+     */
+    static register(autologin) {
+        return this.validateToken(autologin)
+            .then(() => {
+                chrome.storage.local.set({ autologin: autologin })
             })
     }
 
@@ -29,7 +40,11 @@ class Auth {
             chrome.storage.local.get(['autologin'], store => {
                 if (!store.autologin)
                     return reject()
-                resolve(store.autologin)
+                this.validateToken(store.autologin)
+                    .then(() => {
+                        resolve(store.autologin)
+                    })
+                    .catch(reject)
             })
         })
     }
