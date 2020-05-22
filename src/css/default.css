@@ -1,18 +1,29 @@
 main {
-    min-width: 200px;
+    min-width: 240px;
+    padding: 1em;
 }
 
 body {
     font-family: sans-serif;
     color: rgb(74, 74, 74);
+    margin: 0;
 }
 
 h1, h2, h3, th {
+    margin-top: 0;
     font-weight: 700;
     color: rgb(54, 54, 54);
-    margin: 0;
 }
 
 h1 {
     font-size: 1.2em;
+}
+
+tr:not(:last-child) td {
+    border-bottom: 1px solid rgb(74, 74, 74);
+    padding: .3rem 0;
+}
+
+a {
+    color: inherit;
 }

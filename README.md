@@ -9,4 +9,4 @@ TODOs:
 - [ ] Store API token
 - [x] Retrieve notifications with a backgroup script
 - [x] Show badges when new notifications have been retrieved
-- [ ] Basic UI
+- [x] Basic UI
