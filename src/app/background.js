@@ -1,4 +1,5 @@
 import Controller from './Controller.js'
+import Auth from './Auth.js'
 
 /**
  * Background script data
@@ -13,13 +14,19 @@ let unreadNotifs = []
  */
 
 const init = () => {
-    autologin = "https://intra.epitech.eu/auth-24dbf04d6c47af44e400491edcc22387839e5836"
     chrome.alarms.create('refresh', { periodInMinutes: 3 })
-    update()
+    Auth.login()
+        .then((res) => {
+            autologin = res
+            update()
+        })
+        .catch(() => {})
 }
 
-const update = () => {
-    Controller.getNotifications(autologin)
+const update = async () => {
+    if (!autologin)
+        return
+    const promise = Controller.getNotifications(autologin)
         .then(notifs => {
             unreadNotifs = notifs.filter(notif => {
                 return !readNotifs.find(({ id }) => {
@@ -28,7 +35,7 @@ const update = () => {
             })
             if (unreadNotifs.length > 0) {
                 chrome.browserAction.setBadgeBackgroundColor({
-                    color: [ 255, 0, 0, 255 ]
+                    color: [255, 0, 0, 255]
                 })
                 chrome.browserAction.setBadgeText({
                     text: String(unreadNotifs.length)
@@ -40,6 +47,7 @@ const update = () => {
             }
         })
         .catch(console.error)
+    return promise
 }
 
 /**
@@ -47,11 +55,18 @@ const update = () => {
  */
 
 chrome.runtime.onInstalled.addListener(init)
+chrome.runtime.onStartup.addListener(init)
 
 chrome.runtime.onMessage.addListener((message, from, send) => {
     switch (message.type) {
         case 'getNotifications':
-            send({ ok: true, data: readNotifs.concat(unreadNotifs) })
+            update()
+                .then(() => {
+                    send({ ok: true, data: readNotifs.concat(unreadNotifs) })
+                })
+                .catch(err => {
+                    send({ ok: false, message: err.message })
+                })
             break
         case 'readNotifications':
             readNotifs = readNotifs.concat(unreadNotifs)
@@ -59,10 +74,26 @@ chrome.runtime.onMessage.addListener((message, from, send) => {
             update()
             send({ ok: true })
             break
+        case 'isLoggedIn':
+            send({ ok: true, isLoggedIn: autologin !== null })
+            break
+        case 'register':
+            Auth.register(message.autologin)
+                .then(() => {
+                    autologin = message.autologin
+                    send({ ok: true })
+                })
+                .catch(err => {
+                    autologin = null
+                    send({ ok: false, message: err.message })
+                })
+            break
         default:
             send({ ok: false, message: 'Unknown request' })
             break
     }
+    return true // Fix for 'The message port closed before a response was received'
+    // https://www.edureka.co/community/65627/unchecked-runtime-lasterror-message-response-received-chrome
 })
 
 chrome.alarms.onAlarm.addListener(update)

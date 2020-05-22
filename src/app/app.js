@@ -1,3 +1,5 @@
+import sendMessagePromise from './sendMessagePromise.js'
+
 /**
  * Render notification item in #notifications-table element
  * 
@@ -15,13 +17,44 @@ const renderNotification = (notif) => {
     table.appendChild(tr)
 }
 
-chrome.runtime.sendMessage({ type: 'getNotifications' }, (res) => {
-    if (!res.ok)
-        throw res.message
-    res.data.forEach(notif => renderNotification(notif))
-})
+const init = () => {
+    update()
+}
 
-chrome.runtime.sendMessage({ type: 'readNotifications' }, (res) => {
-    if (!res.ok)
-        throw res.message
-})
+const update = async () => {
+    const notificationsTable = document.querySelector('#notifications-table')
+    const registerForm = document.querySelector('#register-form')
+
+    let isLoggedIn = false
+
+    notificationsTable.classList.remove('active')
+    registerForm.classList.remove('active')
+
+    await sendMessagePromise({ type: 'isLoggedIn' })
+        .then(response => isLoggedIn = response.isLoggedIn)
+        .catch(console.error)
+
+    if (isLoggedIn) {
+        notificationsTable.classList.add('active')
+    } else {
+        registerForm.classList.add('active')
+        registerForm.onsubmit = (e) => {
+            e.preventDefault()
+            const autologin = registerForm.autologin.value
+            sendMessagePromise({ type: 'register', autologin: autologin })
+                .then(update)
+                .catch(console.error)
+        }
+    }
+
+    sendMessagePromise({ type: 'getNotifications' })
+        .then(res => {
+            res.data.forEach(notif => renderNotification(notif))
+        })
+        .catch(console.error)
+
+    sendMessagePromise({ type: 'readNotifications' })
+        .catch(console.error)
+}
+
+init()
