@@ -28,7 +28,7 @@ class ApiRequester {
             options.method = 'GET'
         }
         url = this.formatURL(autologin, url)
-        const promise = fetch(url, options)
+        return fetch(url, options)
             .then(res => {
                 if (res.ok) {
                     return res.json()
@@ -36,7 +36,6 @@ class ApiRequester {
                     throw Error(res.statusText)
                 }
             })
-        return (promise)
     }
 }
 
