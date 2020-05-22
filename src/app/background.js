@@ -26,6 +26,18 @@ const update = () => {
                     return id == notif.id
                 })
             })
+            if (unreadNotifs.length > 0) {
+                chrome.browserAction.setBadgeBackgroundColor({
+                    color: [ 255, 0, 0, 255 ]
+                })
+                chrome.browserAction.setBadgeText({
+                    text: String(unreadNotifs.length)
+                })
+            } else {
+                chrome.browserAction.setBadgeText({
+                    text: ''
+                })
+            }
         })
         .catch(console.error)
 }
