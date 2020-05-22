@@ -9,7 +9,8 @@
     },
     "permissions": [
         "https://intra.epitech.eu/*",
-        "alarms"
+        "alarms",
+        "storage"
     ],
     "background": {
         "page": "src/templates/background.html"

@@ -9,4 +9,4 @@ TODOs:
 - [x] Retrieve notifications with a background script
 - [x] Show badges when new events have been retrieved
 - [x] Basic UI
-- [ ] Store API token
+- [x] Store API token

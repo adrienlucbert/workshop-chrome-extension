@@ -12,11 +12,44 @@ const renderNotification = (notif) => {
     table.appendChild(tr)
 }
 
-sendMessagePromise({ type: 'getNotifications' })
+const init = () => {
+    update()
+}
+
+const update = async () => {
+    const notificationsTable = document.querySelector('#notifications-table')
+    const registerForm = document.querySelector('#register-form')
+
+    let isLoggedIn = false
+
+    notificationsTable.classList.remove('active')
+    registerForm.classList.remove('active')
+
+    await sendMessagePromise({ type: 'isLoggedIn' })
+        .then(response => isLoggedIn = response.isLoggedIn)
+        .catch(console.error)
+
+    if (isLoggedIn) {
+        notificationsTable.classList.add('active')
+    } else {
+        registerForm.classList.add('active')
+        registerForm.onsubmit = (e) => {
+            e.preventDefault()
+            const autologin = registerForm.autologin.value
+            sendMessagePromise({ type: 'register', autologin: autologin })
+                .then(update)
+                .catch(console.error)
+        }
+    }
+
+    sendMessagePromise({ type: 'getNotifications' })
     .then(response => {
-        for (let notif of response.notifs)
+        for (let notif of response.data)
             renderNotification(notif)
     })
     .catch(console.error)
+    
+    sendMessagePromise({ type: 'readNotifications' })
+}
 
-sendMessagePromise({ type: 'readNotifications' })
+init()

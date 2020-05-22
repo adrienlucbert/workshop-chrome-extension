@@ -1,6 +1,7 @@
 import Controller from './Controller.js'
-import autologin from './config.js'
+import Store from './Store.js'
 
+let autologin = undefined
 let readNotifs = []
 let unreadNotifs = []
 
@@ -9,16 +10,18 @@ const install = () => {
     init()
 }
 
-const init = () => {
+const init = async () => {
     console.log('Init...')
     chrome.alarms.create('refresh', { periodInMinutes: 3 })
+    autologin = await Store.get('autologin')
     update()
 }
 
 const update = () => {
     console.log('Update...')
-    Controller.getNotifications(autologin)
-        .then(json => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const json = await Controller.getNotifications(autologin)
             unreadNotifs = json.filter(notif => {
                 return !readNotifs.find(({ id }) => id === notif.id)
             })
@@ -34,14 +37,24 @@ const update = () => {
                     text: ''
                 })
             }
-        })
-        .catch(console.error)
+            console.log(json)
+            resolve()
+        } catch (err) {
+            reject(err)
+        }
+    })
 }
 
 const API = (message, from, send) => {
     switch (message.type) {
         case 'getNotifications':
-            send({ ok: true, notifs: readNotifs.concat(unreadNotifs) })
+            update()
+                .then(() => {
+                    send({ ok: true, data: readNotifs.concat(unreadNotifs) })
+                })
+                .catch(err => {
+                    send({ ok: false, message: err.message })
+                })
         break
         case 'readNotifications':
             readNotifs = readNotifs.concat(unreadNotifs)
@@ -49,10 +62,19 @@ const API = (message, from, send) => {
             update()
             send({ ok: true })
         break
+        case 'isLoggedIn':
+            send({ ok: true, isLoggedIn: Boolean(autologin) })
+        break
+        case 'register':
+            autologin = message.autologin
+            Store.set('autologin', message.autologin)
+            send({ ok: true })
+        break
         default:
             send({ ok: false, message: 'Request type unknown' })
-        break;
+        break
     }
+    return true
 }
 
 chrome.runtime.onMessage.addListener(API)
