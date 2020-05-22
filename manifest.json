@@ -8,6 +8,10 @@
         "default_popup": "src/templates/popup.html"
     },
     "permissions": [
-        "https://intra.epitech.eu/*"
-    ]
+        "https://intra.epitech.eu/*",
+        "alarms"
+    ],
+    "background": {
+        "page": "src/templates/background.html"
+    }
   }

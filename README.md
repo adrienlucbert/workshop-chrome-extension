@@ -6,7 +6,7 @@ Creating a web browser extension is not as challenging as it seems, and is somet
 
 TODOs:
 - [x] Epitech's Intranet API requester
-- [ ] Retrieve notifications with a background script
+- [x] Retrieve notifications with a background script
 - [ ] Show badges when new events have been retrieved
 - [ ] Basic UI
 - [ ] Store API token
