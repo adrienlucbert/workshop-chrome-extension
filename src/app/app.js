@@ -18,3 +18,5 @@ sendMessagePromise({ type: 'getNotifications' })
             renderNotification(notif)
     })
     .catch(console.error)
+
+sendMessagePromise({ type: 'readNotifications' })

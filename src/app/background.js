@@ -1,7 +1,8 @@
 import Controller from './Controller.js'
 import autologin from './config.js'
 
-let notifs = []
+let readNotifs = []
+let unreadNotifs = []
 
 const install = () => {
     console.log('Install..')
@@ -18,9 +19,20 @@ const update = () => {
     console.log('Update...')
     Controller.getNotifications(autologin)
         .then(json => {
-            notifs = json
-            for (let notif of notifs) {
-                console.log(notif.title)
+            unreadNotifs = json.filter(notif => {
+                return !readNotifs.find(({ id }) => id === notif.id)
+            })
+            chrome.browserAction.setBadgeBackgroundColor({
+                color: [255, 0, 0, 255]
+            })
+            if (unreadNotifs.length > 0) {
+                chrome.browserAction.setBadgeText({
+                    text: String(unreadNotifs.length)
+                })
+            } else {
+                chrome.browserAction.setBadgeText({
+                    text: ''
+                })
             }
         })
         .catch(console.error)
@@ -29,14 +41,18 @@ const update = () => {
 const API = (message, from, send) => {
     switch (message.type) {
         case 'getNotifications':
-            send({ ok: true, notifs: notifs })
+            send({ ok: true, notifs: readNotifs.concat(unreadNotifs) })
+        break
+        case 'readNotifications':
+            readNotifs = readNotifs.concat(unreadNotifs)
+            unreadNotifs = []
+            update()
+            send({ ok: true })
         break
         default:
             send({ ok: false, message: 'Request type unknown' })
         break;
     }
-    console.log(message)
-    send({ ok: true, message: 'tata' })
 }
 
 chrome.runtime.onMessage.addListener(API)
