@@ -1,53 +1,53 @@
 import Controller from './Controller.js'
 import Auth from './Auth.js'
-
-/**
- * Background script data
- */
-
-let autologin = null
-let readNotifs = []
-let unreadNotifs = []
+import Store from './Store.js'
 
 /**
  * Background script hooks
  */
 
-const init = () => {
-    chrome.alarms.create('refresh', { periodInMinutes: 3 })
-    Auth.login()
-        .then((res) => {
-            autologin = res
-            update()
-        })
-        .catch(() => {})
+const init = async () => {
+    try {
+        chrome.alarms.create('refresh', { periodInMinutes: 3 })
+        Store.set('autologin', null)
+        Store.set('readNotifs', [])
+        Store.set('unreadNotifs', [])
+        await Store.restoreAll()
+        const autologin = await Auth.login()
+        Store.set('autologin', autologin)
+        update()
+    } catch (err) {
+    }
 }
 
 const update = async () => {
-    if (!autologin)
-        return
-    const promise = Controller.getNotifications(autologin)
-        .then(notifs => {
-            unreadNotifs = notifs.filter(notif => {
-                return !readNotifs.find(({ id }) => {
-                    return id == notif.id
-                })
+    return new Promise((resolve, reject) => {
+        if (!Store.get('autologin'))
+            return reject('API token not set')
+        Controller.getNotifications(Store.get('autologin'))
+            .then(async (notifs) => {
+                Store.set('unreadNotifs', notifs.filter(notif => {
+                    return !Store.get('readNotifs').find(({ id }) => {
+                        return id == notif.id
+                    })
+                }))
+                if (Store.get('unreadNotifs').length > 0) {
+                    chrome.browserAction.setBadgeBackgroundColor({
+                        color: [255, 0, 0, 255]
+                    })
+                    chrome.browserAction.setBadgeText({
+                        text: String(Store.get('readNotifs').length)
+                    })
+                } else {
+                    chrome.browserAction.setBadgeText({
+                        text: ''
+                    })
+                }
+                await Store.saveAll()
+                resolve()
             })
-            if (unreadNotifs.length > 0) {
-                chrome.browserAction.setBadgeBackgroundColor({
-                    color: [255, 0, 0, 255]
-                })
-                chrome.browserAction.setBadgeText({
-                    text: String(unreadNotifs.length)
-                })
-            } else {
-                chrome.browserAction.setBadgeText({
-                    text: ''
-                })
-            }
-        })
-        .catch(console.error)
-    return promise
+            .catch(reject)
+    })
 }
 
 /**
@@ -62,29 +62,33 @@ chrome.runtime.onMessage.addListener((message, from, send) => {
         case 'getNotifications':
             update()
                 .then(() => {
-                    send({ ok: true, data: readNotifs.concat(unreadNotifs) })
+                    send({
+                        ok: true, data: Store.get('readNotifs')
+                            .concat(Store.get('unreadNotifs')) 
+                    })
                 })
                 .catch(err => {
                     send({ ok: false, message: err.message })
                 })
             break
         case 'readNotifications':
-            readNotifs = readNotifs.concat(unreadNotifs)
-            unreadNotifs = []
+            Store.set('readNotifs', Store.get('readNotifs')
+                .concat(Store.get('unreadNotifs')))
+            Store.set('unreadNotifs', [])
             update()
             send({ ok: true })
             break
         case 'isLoggedIn':
-            send({ ok: true, isLoggedIn: autologin !== null })
+            send({ ok: true, isLoggedIn: Boolean(Store.get('autologin')) })
             break
         case 'register':
             Auth.register(message.autologin)
                 .then(() => {
-                    autologin = message.autologin
+                    Store.set('autologin', message.autologin)
                     send({ ok: true })
                 })
                 .catch(err => {
-                    autologin = null
+                    Store.set('autologin', null)
                     send({ ok: false, message: err.message })
                 })
             break

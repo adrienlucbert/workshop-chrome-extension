@@ -25,9 +25,6 @@ class Auth {
      */
     static register(autologin) {
         return this.validateToken(autologin)
-            .then(() => {
-                chrome.storage.local.set({ autologin: autologin })
-            })
     }
 
     /**
